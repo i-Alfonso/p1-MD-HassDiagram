@@ -10,10 +10,6 @@ class AnalizadorRelaciones:
     def __init__(self, conjunto, relacion):
         """
         Inicializa el analizador con un conjunto y una relación.
-
-        Args:
-            conjunto (set): Conjunto de elementos sobre el cual se define la relación
-            relacion (set): Conjunto de pares ordenados (tuplas) que representan la relación
         """
         self.conjunto = set(conjunto)  # Asegurar que es un conjunto
         self.relacion = set(relacion)  # Asegurar que es un conjunto de tuplas
@@ -26,8 +22,6 @@ class AnalizadorRelaciones:
         """
         Valida que todos los elementos de la relación pertenezcan al conjunto.
 
-        Raises:
-            ValueError: Si algún elemento de la relación no está en el conjunto
         """
         for (a, b) in self.relacion:
             if a not in self.conjunto or b not in self.conjunto:
@@ -54,9 +48,6 @@ class AnalizadorRelaciones:
         """
         Determina si la relación es irreflexiva.
         Una relación R es irreflexiva si para ningún elemento a del conjunto, (a,a) ∈ R.
-
-        Returns:
-            tuple: (bool, str) - (resultado, justificación)
         """
         pares_reflexivos = []
 
@@ -73,9 +64,6 @@ class AnalizadorRelaciones:
         """
         Determina si la relación es simétrica.
         Una relación R es simétrica si para todo (a,b) ∈ R, también (b,a) ∈ R.
-
-        Returns:
-            tuple: (bool, str) - (resultado, justificación)
         """
         pares_faltantes = []
 
@@ -93,9 +81,6 @@ class AnalizadorRelaciones:
         Determina si la relación es asimétrica.
         Una relación R es asimétrica si para todo (a,b) ∈ R con a≠b, (b,a) ∉ R.
         Además, no debe contener pares reflexivos.
-
-        Returns:
-            tuple: (bool, str) - (resultado, justificación)
         """
         # Verificar que no hay pares reflexivos
         pares_reflexivos = [(a, a) for a in self.conjunto if (a, a) in self.relacion]
@@ -116,10 +101,6 @@ class AnalizadorRelaciones:
     def es_antisimetrica(self):
         """
         Determina si la relación es antisimétrica.
-        Una relación R es antisimétrica si para todo (a,b) ∈ R y (b,a) ∈ R, entonces a = b.
-
-        Returns:
-            tuple: (bool, str) - (resultado, justificación)
         """
         violaciones = []
 
@@ -135,10 +116,6 @@ class AnalizadorRelaciones:
     def es_transitiva(self):
         """
         Determina si la relación es transitiva.
-        Una relación R es transitiva si para todo (a,b) ∈ R y (b,c) ∈ R, entonces (a,c) ∈ R.
-
-        Returns:
-            tuple: (bool, str) - (resultado, justificación)
         """
         pares_faltantes = []
 
@@ -163,9 +140,6 @@ class AnalizadorRelaciones:
         """
         Determina si la relación es un orden parcial.
         Un orden parcial debe ser reflexivo, antisimétrico y transitivo.
-
-        Returns:
-            tuple: (bool, str) - (resultado, justificación detallada)
         """
         reflexiva, just_ref = self.es_reflexiva()
         antisimetrica, just_anti = self.es_antisimetrica()
@@ -187,9 +161,6 @@ Resultado: {'ES un orden parcial' if es_orden else 'NO ES un orden parcial'}
     def analizar_propiedades(self):
         """
         Realiza un análisis completo de todas las propiedades de la relación.
-
-        Returns:
-            dict: Diccionario con todas las propiedades analizadas
         """
         return {
             'reflexiva': self.es_reflexiva(),
@@ -206,9 +177,6 @@ Resultado: {'ES un orden parcial' if es_orden else 'NO ES un orden parcial'}
         """
         Genera el diagrama de Hasse para un orden parcial.
         Elimina las aristas transitivas y reflexivas para mostrar solo la estructura mínima.
-
-        Returns:
-            tuple: (bool, str/dict) - (es_orden_parcial, diagrama_o_error)
         """
         es_orden, _ = self.es_orden_parcial()
 
@@ -254,11 +222,6 @@ Resultado: {'ES un orden parcial' if es_orden else 'NO ES un orden parcial'}
         """
         Calcula los niveles de cada elemento en el diagrama de Hasse.
         Los elementos minimales están en nivel 0.
-
-        Args:
-            grafo (dict): Grafo del diagrama de Hasse
-            elementos (set): Conjunto de elementos
-
         Returns:
             dict: Diccionario {nivel: [elementos]}
         """
