@@ -747,10 +747,3 @@ except ImportError:
     print("Error: Instala matplotlib y networkx: pip install matplotlib networkx")
     return False
 ```
-
-#### **Retroalimentación Usuario:**
-- Mensajes de error descriptivos
-- Sugerencias de corrección
-- Validación progresiva de entrada
-
----
