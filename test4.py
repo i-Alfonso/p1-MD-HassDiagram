@@ -51,11 +51,7 @@ relacion_compleja = {
 
 print("A = {1, 2, 3, 4, 5, 6, 10, 12, 15, 20, 30, 60}")
 print("Relación: divisibilidad (a|b) - 'a divide a b'")
-print("60 = 2² × 3 × 5 → muchos divisores → estructura compleja")
 print("=" * 70)
 
 mostrar_analisis_completo(conjunto_complejo, relacion_compleja)
 
-print("\n" + "="*70)
-print("OTRO EJEMPLO COMPLEJO: Subconjuntos de {1,2,3} con inclusión")
-print("="*70)

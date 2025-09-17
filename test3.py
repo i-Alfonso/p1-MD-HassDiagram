@@ -22,6 +22,3 @@ print("A = {1, 2, 4, 8, 16}")
 print("Relación: divisibilidad (a|b)")
 mostrar_analisis_completo(conjunto4, relacion4)
 
-print("\n" + "="*80)
-print("CONTRAEJEMPLOS - NO SON ÓRDENES PARCIALES")
-print("="*80)
