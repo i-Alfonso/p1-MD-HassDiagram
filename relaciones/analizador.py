@@ -4,7 +4,10 @@ class AnalizadorRelaciones:
 
     Esta clase permite determinar si una relación es reflexiva, irreflexiva,
     simétrica, asimétrica, antisimétrica o transitiva, y puede verificar
-    si constituye un orden parcial.
+    si constituye un orden parcial o una relación de equivalencia.
+
+    EXTENSIÓN: Ahora incluye análisis de relaciones de equivalencia y
+    generación de diagramas de partición.
     """
 
     def __init__(self, conjunto, relacion):
@@ -18,10 +21,8 @@ class AnalizadorRelaciones:
         self._validar_relacion()
 
     def _validar_relacion(self):
-
         """
         Valida que todos los elementos de la relación pertenezcan al conjunto.
-
         """
         for (a, b) in self.relacion:
             if a not in self.conjunto or b not in self.conjunto:
@@ -31,7 +32,6 @@ class AnalizadorRelaciones:
         """
         Determina si la relación es reflexiva.
         Una relación R es reflexiva si para todo elemento a del conjunto, (a,a) ∈ R.
-
         """
         elementos_faltantes = []
 
@@ -158,20 +158,239 @@ Resultado: {'ES un orden parcial' if es_orden else 'NO ES un orden parcial'}
 
         return es_orden, justificacion
 
+    # ========================================================================
+    # NUEVA FUNCIONALIDAD: RELACIONES DE EQUIVALENCIA
+    # ========================================================================
+
+    def es_relacion_equivalencia(self):
+        """
+        Determina si la relación es una relación de equivalencia.
+        Una relación de equivalencia debe ser reflexiva, simétrica y transitiva.
+
+        Returns:
+            tuple: (bool, str) - (es_equivalencia, justificacion)
+        """
+        reflexiva, just_ref = self.es_reflexiva()
+        simetrica, just_sim = self.es_simetrica()
+        transitiva, just_trans = self.es_transitiva()
+
+        es_equivalencia = reflexiva and simetrica and transitiva
+
+        justificacion = f"""
+Análisis para relación de equivalencia:
+- Reflexiva: {'✓' if reflexiva else '✗'} {just_ref}
+- Simétrica: {'✓' if simetrica else '✗'} {just_sim}
+- Transitiva: {'✓' if transitiva else '✗'} {just_trans}
+
+Resultado: {'ES una relación de equivalencia' if es_equivalencia else 'NO ES una relación de equivalencia'}
+"""
+
+        return es_equivalencia, justificacion
+
+    def generar_clases_equivalencia(self):
+        """
+        Genera las clases de equivalencia si la relación es de equivalencia.
+
+        Una clase de equivalencia [a] = {x ∈ A | aRx}, es decir, todos los elementos
+        relacionados con 'a' forman una clase.
+
+        Returns:
+            tuple: (bool, dict/str) - (exito, resultado_o_error)
+        """
+        es_equiv, _ = self.es_relacion_equivalencia()
+
+        if not es_equiv:
+            return False, "No se pueden generar clases de equivalencia: la relación no es de equivalencia"
+
+        clases = []
+        elementos_procesados = set()
+
+        # Para cada elemento no procesado, generar su clase de equivalencia
+        for elemento in self.conjunto:
+            if elemento not in elementos_procesados:
+                # Crear nueva clase de equivalencia con todos los elementos relacionados
+                clase = set()
+
+                # Encontrar todos los elementos relacionados con este elemento
+                for otro_elemento in self.conjunto:
+                    if (elemento, otro_elemento) in self.relacion:
+                        clase.add(otro_elemento)
+
+                clases.append(clase)
+                elementos_procesados.update(clase)
+
+        return True, {
+            'clases': clases,
+            'numero_clases': len(clases),
+            'elementos_totales': len(self.conjunto),
+            'particion_completa': len(elementos_procesados) == len(self.conjunto)
+        }
+
+    def mostrar_diagrama_particion(self):
+        """
+        Genera y muestra un diagrama de partición para relaciones de equivalencia.
+        Similar a mostrar_diagrama_hasse() pero para visualizar clases de equivalencia.
+        """
+        try:
+            import matplotlib.pyplot as plt
+            import matplotlib.patches as patches
+            import numpy as np
+        except ImportError:
+            print("Error: Instala matplotlib: pip install matplotlib")
+            return False
+
+        es_equiv, resultado = self.generar_clases_equivalencia()
+        if not es_equiv:
+            print(resultado)
+            return False
+
+        clases = resultado['clases']
+
+        # Configurar la figura
+        fig, ax = plt.subplots(1, 1, figsize=(12, 8))
+        ax.set_title("Diagrama de Partición - Clases de Equivalencia",
+                     fontsize=16, fontweight='bold', pad=20)
+
+        # Colores para las clases (usando colormap para variedad)
+        colores = plt.cm.Set3(np.linspace(0, 1, len(clases)))
+
+        # Calcular posiciones para las clases
+        posiciones = self._calcular_posiciones_particion(clases)
+
+        # Dibujar cada clase de equivalencia
+        for i, (clase, color) in enumerate(zip(clases, colores)):
+            centro_x, centro_y, radio = posiciones[i]
+
+            # Dibujar círculo de la clase
+            circulo = patches.Circle((centro_x, centro_y), radio,
+                                     facecolor=color, edgecolor='black',
+                                     linewidth=2, alpha=0.7)
+            ax.add_patch(circulo)
+
+            # Colocar elementos dentro del círculo
+            elementos_ordenados = sorted(list(clase))
+            self._posicionar_elementos_en_circulo(ax, elementos_ordenados,
+                                                  centro_x, centro_y, radio * 0.6)
+
+            # Etiqueta de la clase
+            ax.text(centro_x, centro_y - radio - 0.3, f'Clase {i+1}',
+                    ha='center', va='center', fontsize=12, fontweight='bold')
+
+        # Configurar ejes
+        ax.set_xlim(-1, len(clases) * 2)
+        ax.set_ylim(-2, 3)
+        ax.set_aspect('equal')
+        ax.axis('off')
+
+        # Información adicional
+        info_text = f"Número de clases: {len(clases)}\n"
+        info_text += f"Elementos totales: {resultado['elementos_totales']}\n"
+        info_text += f"Partición completa: {'Sí' if resultado['particion_completa'] else 'No'}"
+
+        ax.text(0.02, 0.98, info_text, transform=ax.transAxes,
+                verticalalignment='top', bbox=dict(boxstyle='round',
+                                                   facecolor='wheat', alpha=0.8), fontsize=10)
+
+        plt.tight_layout()
+        plt.show()
+        return True
+
+    def _calcular_posiciones_particion(self, clases):
+        """
+        Calcula las posiciones y tamaños de los círculos para cada clase.
+        Reutiliza la lógica de posicionamiento pero adaptada para círculos.
+
+        Args:
+            clases (list): Lista de clases de equivalencia
+
+        Returns:
+            list: Lista de tuplas (centro_x, centro_y, radio)
+        """
+        posiciones = []
+
+        for i, clase in enumerate(clases):
+            # Posición horizontal: distribuir uniformemente
+            centro_x = i * 1.8 + 1
+            centro_y = 1
+
+            # Radio basado en el número de elementos (mínimo 0.4, máximo 0.8)
+            radio = min(0.8, max(0.4, 0.2 + len(clase) * 0.1))
+
+            posiciones.append((centro_x, centro_y, radio))
+
+        return posiciones
+
+    def _posicionar_elementos_en_circulo(self, ax, elementos, centro_x, centro_y, radio_interno):
+        """
+        Posiciona los elementos dentro de un círculo de forma estética.
+        Adaptación del método de posicionamiento para elementos en círculos.
+
+        Args:
+            ax: Axes de matplotlib
+            elementos: Lista de elementos a posicionar
+            centro_x, centro_y: Centro del círculo
+            radio_interno: Radio del área donde colocar elementos
+        """
+        n_elementos = len(elementos)
+
+        if n_elementos == 1:
+            # Un solo elemento en el centro
+            ax.text(centro_x, centro_y, str(elementos[0]),
+                    ha='center', va='center', fontsize=12, fontweight='bold')
+        else:
+            # Múltiples elementos distribuidos en círculo
+            import math
+
+            for i, elemento in enumerate(elementos):
+                angulo = 2 * math.pi * i / n_elementos
+                x = centro_x + radio_interno * math.cos(angulo)
+                y = centro_y + radio_interno * math.sin(angulo)
+
+                ax.text(x, y, str(elemento), ha='center', va='center',
+                        fontsize=10, fontweight='bold',
+                        bbox=dict(boxstyle='circle,pad=0.3', facecolor='white',
+                                  edgecolor='black', linewidth=1))
+
     def analizar_propiedades(self):
         """
         Realiza un análisis completo de todas las propiedades de la relación.
+        EXTENSIÓN: Ahora incluye análisis de relación de equivalencia.
         """
-        return {
+        propiedades = {
             'reflexiva': self.es_reflexiva(),
             'irreflexiva': self.es_irreflexiva(),
             'simetrica': self.es_simetrica(),
             'asimetrica': self.es_asimetrica(),
             'antisimetrica': self.es_antisimetrica(),
             'transitiva': self.es_transitiva(),
-            'orden_parcial': self.es_orden_parcial()
+            'orden_parcial': self.es_orden_parcial(),
+            'relacion_equivalencia': self.es_relacion_equivalencia()  # NUEVO
         }
 
+        return propiedades
+
+    def determinar_tipo_relacion(self):
+        """
+        Determina qué tipo de relación especial es: orden parcial, equivalencia, ambos, o ninguno.
+
+        Returns:
+            tuple: (tipo, descripcion)
+        """
+        es_orden, _ = self.es_orden_parcial()
+        es_equiv, _ = self.es_relacion_equivalencia()
+
+        if es_orden and es_equiv:
+            return "ORDEN PARCIAL Y EQUIVALENCIA", "Relación especial: es tanto orden parcial como relación de equivalencia (relación de igualdad)"
+        elif es_orden:
+            return "ORDEN PARCIAL", "Es un orden parcial: reflexiva, antisimétrica y transitiva"
+        elif es_equiv:
+            return "RELACIÓN DE EQUIVALENCIA", "Es una relación de equivalencia: reflexiva, simétrica y transitiva"
+        else:
+            return "RELACIÓN GENERAL", "No es ni orden parcial ni relación de equivalencia"
+
+    # ========================================================================
+    # MÉTODOS EXISTENTES PARA DIAGRAMAS DE HASSE (SIN CAMBIOS)
+    # ========================================================================
 
     def generar_diagrama_hasse(self):
         """
@@ -217,7 +436,6 @@ Resultado: {'ES un orden parcial' if es_orden else 'NO ES un orden parcial'}
             'elementos': self.conjunto
         }
 
-
     def _calcular_niveles_hasse(self, grafo, elementos):
         """
         Calcula los niveles de cada elemento en el diagrama de Hasse.
@@ -262,7 +480,6 @@ Resultado: {'ES un orden parcial' if es_orden else 'NO ES un orden parcial'}
             nivel_actual += 1
 
         return niveles
-
 
     def mostrar_diagrama_hasse(self):
         """
@@ -320,5 +537,3 @@ Resultado: {'ES un orden parcial' if es_orden else 'NO ES un orden parcial'}
                 x = i - len(elementos_ordenados)/2 + 0.5 if len(elementos_ordenados) > 1 else 0
                 pos[elemento] = (x, nivel)
         return pos
-
-
