@@ -1,23 +1,15 @@
 class AnalizadorRelaciones:
     """
     Clase para analizar propiedades de relaciones matemáticas en conjuntos.
-
-    Esta clase permite determinar si una relación es reflexiva, irreflexiva,
-    simétrica, asimétrica, antisimétrica o transitiva, y puede verificar
-    si constituye un orden parcial o una relación de equivalencia.
-
-    EXTENSIÓN: Ahora incluye análisis de relaciones de equivalencia y
-    generación de diagramas de partición.
+    Ahora incluye análisis de equivalencia y generación de grafos generales.
     """
 
     def __init__(self, conjunto, relacion):
         """
         Inicializa el analizador con un conjunto y una relación.
         """
-        self.conjunto = set(conjunto)  # Asegurar que es un conjunto
-        self.relacion = set(relacion)  # Asegurar que es un conjunto de tuplas
-
-        # Validar que todos los elementos de la relación están en el conjunto
+        self.conjunto = set(conjunto)
+        self.relacion = set(relacion)
         self._validar_relacion()
 
     def _validar_relacion(self):
@@ -31,10 +23,8 @@ class AnalizadorRelaciones:
     def es_reflexiva(self):
         """
         Determina si la relación es reflexiva.
-        Una relación R es reflexiva si para todo elemento a del conjunto, (a,a) ∈ R.
         """
         elementos_faltantes = []
-
         for elemento in self.conjunto:
             if (elemento, elemento) not in self.relacion:
                 elementos_faltantes.append(elemento)
@@ -47,10 +37,8 @@ class AnalizadorRelaciones:
     def es_irreflexiva(self):
         """
         Determina si la relación es irreflexiva.
-        Una relación R es irreflexiva si para ningún elemento a del conjunto, (a,a) ∈ R.
         """
         pares_reflexivos = []
-
         for elemento in self.conjunto:
             if (elemento, elemento) in self.relacion:
                 pares_reflexivos.append((elemento, elemento))
@@ -63,10 +51,8 @@ class AnalizadorRelaciones:
     def es_simetrica(self):
         """
         Determina si la relación es simétrica.
-        Una relación R es simétrica si para todo (a,b) ∈ R, también (b,a) ∈ R.
         """
         pares_faltantes = []
-
         for (a, b) in self.relacion:
             if (b, a) not in self.relacion:
                 pares_faltantes.append((b, a))
@@ -79,15 +65,11 @@ class AnalizadorRelaciones:
     def es_asimetrica(self):
         """
         Determina si la relación es asimétrica.
-        Una relación R es asimétrica si para todo (a,b) ∈ R con a≠b, (b,a) ∉ R.
-        Además, no debe contener pares reflexivos.
         """
-        # Verificar que no hay pares reflexivos
         pares_reflexivos = [(a, a) for a in self.conjunto if (a, a) in self.relacion]
         if pares_reflexivos:
             return False, f"La relación NO es asimétrica: contiene pares reflexivos {pares_reflexivos}"
 
-        # Verificar que no hay pares simétricos
         pares_simetricos = []
         for (a, b) in self.relacion:
             if a != b and (b, a) in self.relacion:
@@ -103,7 +85,6 @@ class AnalizadorRelaciones:
         Determina si la relación es antisimétrica.
         """
         violaciones = []
-
         for (a, b) in self.relacion:
             if (b, a) in self.relacion and a != b:
                 violaciones.append(((a, b), (b, a)))
@@ -118,17 +99,12 @@ class AnalizadorRelaciones:
         Determina si la relación es transitiva.
         """
         pares_faltantes = []
-
-        # Para cada par (a,b) en la relación
         for (a, b) in self.relacion:
-            # Buscar todos los pares (b,c) en la relación
             for (x, c) in self.relacion:
-                if x == b:  # Encontramos (b,c)
-                    # Verificar si (a,c) está en la relación
+                if x == b:
                     if (a, c) not in self.relacion:
                         pares_faltantes.append((a, c))
 
-        # Eliminar duplicados
         pares_faltantes = list(set(pares_faltantes))
 
         if not pares_faltantes:
@@ -139,7 +115,6 @@ class AnalizadorRelaciones:
     def es_orden_parcial(self):
         """
         Determina si la relación es un orden parcial.
-        Un orden parcial debe ser reflexivo, antisimétrico y transitivo.
         """
         reflexiva, just_ref = self.es_reflexiva()
         antisimetrica, just_anti = self.es_antisimetrica()
@@ -155,26 +130,18 @@ Análisis para orden parcial:
 
 Resultado: {'ES un orden parcial' if es_orden else 'NO ES un orden parcial'}
 """
-
         return es_orden, justificacion
 
-    # ========================================================================
-    # NUEVA FUNCIONALIDAD: RELACIONES DE EQUIVALENCIA
-    # ========================================================================
-
-    def es_relacion_equivalencia(self):
+    def es_equivalencia(self):
         """
-        Determina si la relación es una relación de equivalencia.
+        Determina si la relación es de equivalencia.
         Una relación de equivalencia debe ser reflexiva, simétrica y transitiva.
-
-        Returns:
-            tuple: (bool, str) - (es_equivalencia, justificacion)
         """
         reflexiva, just_ref = self.es_reflexiva()
         simetrica, just_sim = self.es_simetrica()
         transitiva, just_trans = self.es_transitiva()
 
-        es_equivalencia = reflexiva and simetrica and transitiva
+        es_equiv = reflexiva and simetrica and transitiva
 
         justificacion = f"""
 Análisis para relación de equivalencia:
@@ -182,251 +149,97 @@ Análisis para relación de equivalencia:
 - Simétrica: {'✓' if simetrica else '✗'} {just_sim}
 - Transitiva: {'✓' if transitiva else '✗'} {just_trans}
 
-Resultado: {'ES una relación de equivalencia' if es_equivalencia else 'NO ES una relación de equivalencia'}
+Resultado: {'ES una relación de equivalencia' if es_equiv else 'NO ES una relación de equivalencia'}
 """
+        return es_equiv, justificacion
 
-        return es_equivalencia, justificacion
-
-    def generar_clases_equivalencia(self):
+    def calcular_clases_equivalencia(self):
         """
-        Genera las clases de equivalencia si la relación es de equivalencia.
-
-        Una clase de equivalencia [a] = {x ∈ A | aRx}, es decir, todos los elementos
-        relacionados con 'a' forman una clase.
-
-        Returns:
-            tuple: (bool, dict/str) - (exito, resultado_o_error)
+        Calcula las clases de equivalencia si la relación es de equivalencia.
         """
-        es_equiv, _ = self.es_relacion_equivalencia()
+        es_equiv, _ = self.es_equivalencia()
 
         if not es_equiv:
-            return False, "No se pueden generar clases de equivalencia: la relación no es de equivalencia"
+            return False, "No se pueden calcular clases de equivalencia: la relación no es de equivalencia"
 
-        clases = []
-        elementos_procesados = set()
+        # Usar unión-búsqueda para encontrar componentes conectados
+        padre = {elem: elem for elem in self.conjunto}
 
-        # Para cada elemento no procesado, generar su clase de equivalencia
-        for elemento in self.conjunto:
-            if elemento not in elementos_procesados:
-                # Crear nueva clase de equivalencia con todos los elementos relacionados
-                clase = set()
+        def encontrar(x):
+            if padre[x] != x:
+                padre[x] = encontrar(padre[x])
+            return padre[x]
 
-                # Encontrar todos los elementos relacionados con este elemento
-                for otro_elemento in self.conjunto:
-                    if (elemento, otro_elemento) in self.relacion:
-                        clase.add(otro_elemento)
+        def unir(x, y):
+            px, py = encontrar(x), encontrar(y)
+            if px != py:
+                padre[px] = py
 
-                clases.append(clase)
-                elementos_procesados.update(clase)
+        # Unir elementos relacionados
+        for (a, b) in self.relacion:
+            if a != b:  # No necesitamos procesar pares reflexivos
+                unir(a, b)
+
+        # Agrupar elementos por su representante
+        clases = {}
+        for elem in self.conjunto:
+            rep = encontrar(elem)
+            if rep not in clases:
+                clases[rep] = []
+            clases[rep].append(elem)
+
+        # Convertir a lista de conjuntos ordenados
+        clases_equivalencia = [sorted(clase) for clase in clases.values()]
+        clases_equivalencia.sort()
 
         return True, {
-            'clases': clases,
-            'numero_clases': len(clases),
-            'elementos_totales': len(self.conjunto),
-            'particion_completa': len(elementos_procesados) == len(self.conjunto)
+            'clases': clases_equivalencia,
+            'num_clases': len(clases_equivalencia),
+            'particion': clases_equivalencia
         }
 
-    def mostrar_diagrama_particion(self):
+    def generar_grafo_general(self):
         """
-        Genera y muestra un diagrama de partición para relaciones de equivalencia.
-        Similar a mostrar_diagrama_hasse() pero para visualizar clases de equivalencia.
+        Genera un grafo general para cualquier relación.
         """
-        try:
-            import matplotlib.pyplot as plt
-            import matplotlib.patches as patches
-            import numpy as np
-        except ImportError:
-            print("Error: Instala matplotlib: pip install matplotlib")
-            return False
+        grafo = {elemento: [] for elemento in self.conjunto}
 
-        es_equiv, resultado = self.generar_clases_equivalencia()
-        if not es_equiv:
-            print(resultado)
-            return False
+        for (a, b) in self.relacion:
+            if a != b:  # Excluir aristas reflexivas para claridad visual
+                grafo[a].append(b)
 
-        clases = resultado['clases']
-
-        # Configurar la figura
-        fig, ax = plt.subplots(1, 1, figsize=(12, 8))
-        ax.set_title("Diagrama de Partición - Clases de Equivalencia",
-                     fontsize=16, fontweight='bold', pad=20)
-
-        # Colores para las clases (usando colormap para variedad)
-        colores = plt.cm.Set3(np.linspace(0, 1, len(clases)))
-
-        # Calcular posiciones para las clases
-        posiciones = self._calcular_posiciones_particion(clases)
-
-        # Dibujar cada clase de equivalencia
-        for i, (clase, color) in enumerate(zip(clases, colores)):
-            centro_x, centro_y, radio = posiciones[i]
-
-            # Dibujar círculo de la clase
-            circulo = patches.Circle((centro_x, centro_y), radio,
-                                     facecolor=color, edgecolor='black',
-                                     linewidth=2, alpha=0.7)
-            ax.add_patch(circulo)
-
-            # Colocar elementos dentro del círculo
-            elementos_ordenados = sorted(list(clase))
-            self._posicionar_elementos_en_circulo(ax, elementos_ordenados,
-                                                  centro_x, centro_y, radio * 0.6)
-
-            # Etiqueta de la clase
-            ax.text(centro_x, centro_y - radio - 0.3, f'Clase {i+1}',
-                    ha='center', va='center', fontsize=12, fontweight='bold')
-
-        # Configurar ejes
-        ax.set_xlim(-1, len(clases) * 2)
-        ax.set_ylim(-2, 3)
-        ax.set_aspect('equal')
-        ax.axis('off')
-
-        # Información adicional
-        info_text = f"Número de clases: {len(clases)}\n"
-        info_text += f"Elementos totales: {resultado['elementos_totales']}\n"
-        info_text += f"Partición completa: {'Sí' if resultado['particion_completa'] else 'No'}"
-
-        ax.text(0.02, 0.98, info_text, transform=ax.transAxes,
-                verticalalignment='top', bbox=dict(boxstyle='round',
-                                                   facecolor='wheat', alpha=0.8), fontsize=10)
-
-        plt.tight_layout()
-        plt.show()
-        return True
-
-    def _calcular_posiciones_particion(self, clases):
-        """
-        Calcula las posiciones y tamaños de los círculos para cada clase.
-        Reutiliza la lógica de posicionamiento pero adaptada para círculos.
-
-        Args:
-            clases (list): Lista de clases de equivalencia
-
-        Returns:
-            list: Lista de tuplas (centro_x, centro_y, radio)
-        """
-        posiciones = []
-
-        for i, clase in enumerate(clases):
-            # Posición horizontal: distribuir uniformemente
-            centro_x = i * 1.8 + 1
-            centro_y = 1
-
-            # Radio basado en el número de elementos (mínimo 0.4, máximo 0.8)
-            radio = min(0.8, max(0.4, 0.2 + len(clase) * 0.1))
-
-            posiciones.append((centro_x, centro_y, radio))
-
-        return posiciones
-
-    def _posicionar_elementos_en_circulo(self, ax, elementos, centro_x, centro_y, radio_interno):
-        """
-        Posiciona los elementos dentro de un círculo de forma estética.
-        Adaptación del método de posicionamiento para elementos en círculos.
-
-        Args:
-            ax: Axes de matplotlib
-            elementos: Lista de elementos a posicionar
-            centro_x, centro_y: Centro del círculo
-            radio_interno: Radio del área donde colocar elementos
-        """
-        n_elementos = len(elementos)
-
-        if n_elementos == 1:
-            # Un solo elemento en el centro
-            ax.text(centro_x, centro_y, str(elementos[0]),
-                    ha='center', va='center', fontsize=12, fontweight='bold')
-        else:
-            # Múltiples elementos distribuidos en círculo
-            import math
-
-            for i, elemento in enumerate(elementos):
-                angulo = 2 * math.pi * i / n_elementos
-                x = centro_x + radio_interno * math.cos(angulo)
-                y = centro_y + radio_interno * math.sin(angulo)
-
-                ax.text(x, y, str(elemento), ha='center', va='center',
-                        fontsize=10, fontweight='bold',
-                        bbox=dict(boxstyle='circle,pad=0.3', facecolor='white',
-                                  edgecolor='black', linewidth=1))
-
-    def analizar_propiedades(self):
-        """
-        Realiza un análisis completo de todas las propiedades de la relación.
-        EXTENSIÓN: Ahora incluye análisis de relación de equivalencia.
-        """
-        propiedades = {
-            'reflexiva': self.es_reflexiva(),
-            'irreflexiva': self.es_irreflexiva(),
-            'simetrica': self.es_simetrica(),
-            'asimetrica': self.es_asimetrica(),
-            'antisimetrica': self.es_antisimetrica(),
-            'transitiva': self.es_transitiva(),
-            'orden_parcial': self.es_orden_parcial(),
-            'relacion_equivalencia': self.es_relacion_equivalencia()  # NUEVO
+        return {
+            'grafo': grafo,
+            'aristas': [(a, b) for (a, b) in self.relacion if a != b],
+            'elementos': self.conjunto,
+            'total_aristas': len(self.relacion),
+            'aristas_no_reflexivas': len([(a, b) for (a, b) in self.relacion if a != b])
         }
-
-        return propiedades
-
-    def determinar_tipo_relacion(self):
-        """
-        Determina qué tipo de relación especial es: orden parcial, equivalencia, ambos, o ninguno.
-
-        Returns:
-            tuple: (tipo, descripcion)
-        """
-        es_orden, _ = self.es_orden_parcial()
-        es_equiv, _ = self.es_relacion_equivalencia()
-
-        if es_orden and es_equiv:
-            return "ORDEN PARCIAL Y EQUIVALENCIA", "Relación especial: es tanto orden parcial como relación de equivalencia (relación de igualdad)"
-        elif es_orden:
-            return "ORDEN PARCIAL", "Es un orden parcial: reflexiva, antisimétrica y transitiva"
-        elif es_equiv:
-            return "RELACIÓN DE EQUIVALENCIA", "Es una relación de equivalencia: reflexiva, simétrica y transitiva"
-        else:
-            return "RELACIÓN GENERAL", "No es ni orden parcial ni relación de equivalencia"
-
-    # ========================================================================
-    # MÉTODOS EXISTENTES PARA DIAGRAMAS DE HASSE (SIN CAMBIOS)
-    # ========================================================================
 
     def generar_diagrama_hasse(self):
         """
         Genera el diagrama de Hasse para un orden parcial.
-        Elimina las aristas transitivas y reflexivas para mostrar solo la estructura mínima.
         """
         es_orden, _ = self.es_orden_parcial()
 
         if not es_orden:
             return False, "No se puede generar diagrama de Hasse: la relación no es un orden parcial"
 
-        # Crear copia de la relación sin los pares reflexivos
         relacion_sin_reflexivos = {(a, b) for (a, b) in self.relacion if a != b}
-
-        # Eliminar aristas transitivas (reducción transitiva)
         hasse_relacion = set()
 
         for (a, b) in relacion_sin_reflexivos:
-            # Verificar si hay un camino indirecto de a a b
             es_transitiva = False
-            # Busca en todo el conjunto un posible elemento intermediario c que cree un camino indirecto a-c-b
             for c in self.conjunto:
-                # Solo considera elementos c diferentes de a y b
                 if c != a and c != b:
-                    # Si ambas existen → Hay un camino indirecto a→c→b → La arista a→b es transitiva (redundante).
                     if (a, c) in relacion_sin_reflexivos and (c, b) in relacion_sin_reflexivos:
                         es_transitiva = True
                         break
 
-            # Si no hay camino indirecto, es una arista del diagrama de Hasse
             if not es_transitiva:
                 hasse_relacion.add((a, b))
 
-        # Crear grafo del diagrama de Hasse Diccionario : lista
         hasse_grafo = {elemento: [] for elemento in self.conjunto}
-        # Para cada arista a→b en el diagrama de Hasse, agrega b a la lista de sucesores de a
         for (a, b) in hasse_relacion:
             hasse_grafo[a].append(b)
 
@@ -436,22 +249,190 @@ Resultado: {'ES una relación de equivalencia' if es_equivalencia else 'NO ES un
             'elementos': self.conjunto
         }
 
+    def analizar_propiedades(self):
+        """
+        Realiza un análisis completo de todas las propiedades de la relación.
+        """
+        return {
+            'reflexiva': self.es_reflexiva(),
+            'irreflexiva': self.es_irreflexiva(),
+            'simetrica': self.es_simetrica(),
+            'asimetrica': self.es_asimetrica(),
+            'antisimetrica': self.es_antisimetrica(),
+            'transitiva': self.es_transitiva(),
+            'orden_parcial': self.es_orden_parcial(),
+            'equivalencia': self.es_equivalencia()
+        }
+
+    def mostrar_grafo_completo(self):
+        """
+        Muestra el grafo completo incluyendo todas las aristas (reflexivas y no reflexivas).
+        """
+        try:
+            import matplotlib.pyplot as plt
+            import networkx as nx
+        except ImportError:
+            print("Error: Instala matplotlib y networkx: pip install matplotlib networkx")
+            return False
+
+        G = nx.DiGraph()
+        G.add_nodes_from(self.conjunto)
+        G.add_edges_from(self.relacion)  # Incluye TODAS las aristas, incluso reflexivas
+
+        plt.figure(figsize=(10, 8))
+
+        # Posicionamiento circular para mejor visualización
+        pos = nx.spring_layout(G, k=2, iterations=50)
+
+        plt.title("Grafo Completo de la Relación (con aristas reflexivas)", fontsize=14, fontweight='bold')
+
+        # Separar aristas reflexivas de no reflexivas
+        aristas_reflexivas = [(a, b) for (a, b) in self.relacion if a == b]
+        aristas_normales = [(a, b) for (a, b) in self.relacion if a != b]
+
+        # Dibujar nodos
+        nx.draw_networkx_nodes(G, pos, node_color='lightblue', node_size=800, alpha=0.8)
+
+        # Dibujar aristas normales
+        if aristas_normales:
+            G_normal = nx.DiGraph()
+            G_normal.add_edges_from(aristas_normales)
+            nx.draw_networkx_edges(G_normal, pos, arrows=True, arrowsize=20,
+                                   edge_color='gray', width=2, alpha=0.7)
+
+        # Dibujar aristas reflexivas como bucles
+        if aristas_reflexivas:
+            for nodo in [a for (a, b) in aristas_reflexivas]:
+                x, y = pos[nodo]
+                # Crear un pequeño círculo para representar el bucle reflexivo
+                circle = plt.Circle((x + 0.15, y + 0.15), 0.08, fill=False,
+                                    color='red', linewidth=2, alpha=0.7)
+                plt.gca().add_patch(circle)
+                # Añadir una pequeña flecha
+                plt.annotate('', xy=(x + 0.23, y + 0.15), xytext=(x + 0.15, y + 0.23),
+                             arrowprops=dict(arrowstyle='->', color='red', lw=2, alpha=0.7))
+
+        # Dibujar etiquetas
+        nx.draw_networkx_labels(G, pos, font_size=12, font_weight='bold')
+
+        plt.axis('off')
+        plt.tight_layout()
+
+        # Agregar leyenda
+        from matplotlib.lines import Line2D
+        legend_elements = [
+            Line2D([0], [0], color='gray', lw=2, label='Aristas normales'),
+            Line2D([0], [0], color='red', lw=2, label='Aristas reflexivas')
+        ]
+        plt.legend(handles=legend_elements, loc='upper right')
+
+        plt.show()
+        return True
+
+    def mostrar_grafo_general(self):
+        """
+        Muestra un grafo general para cualquier relación.
+        """
+        try:
+            import matplotlib.pyplot as plt
+            import networkx as nx
+            import numpy as np
+        except ImportError:
+            print("Error: Instala matplotlib y networkx: pip install matplotlib networkx")
+            return False
+
+        datos_grafo = self.generar_grafo_general()
+
+        G = nx.DiGraph()
+        G.add_nodes_from(datos_grafo['elementos'])
+        G.add_edges_from(datos_grafo['aristas'])
+
+        plt.figure(figsize=(10, 8))
+
+        # Verificar si es relación de equivalencia para colorear por clases
+        es_equiv, _ = self.es_equivalencia()
+
+        if es_equiv:
+            # Colorear nodos por clases de equivalencia
+            _, datos_equiv = self.calcular_clases_equivalencia()
+            colores = ['lightblue', 'lightgreen', 'lightcoral', 'lightyellow',
+                       'lightpink', 'lightgray', 'lightcyan', 'wheat']
+
+            node_colors = {}
+            for i, clase in enumerate(datos_equiv['clases']):
+                color = colores[i % len(colores)]
+                for elem in clase:
+                    node_colors[elem] = color
+
+            color_list = [node_colors[node] for node in G.nodes()]
+            titulo = "Grafo de Relación de Equivalencia (colores = clases)"
+        else:
+            color_list = 'lightblue'
+            titulo = "Grafo General de la Relación"
+
+        # Posicionamiento circular para mejor visualización
+        pos = nx.spring_layout(G, k=2, iterations=50)
+
+        plt.title(titulo, fontsize=14, fontweight='bold')
+
+        # Dibujar nodos y aristas
+        nx.draw_networkx_nodes(G, pos, node_color=color_list, node_size=800, alpha=0.8)
+        nx.draw_networkx_edges(G, pos, arrows=True, arrowsize=20,
+                               edge_color='gray', width=2, alpha=0.7)
+        nx.draw_networkx_labels(G, pos, font_size=12, font_weight='bold')
+
+        plt.axis('off')
+        plt.tight_layout()
+        plt.show()
+        return True
+
+    def mostrar_diagrama_hasse(self):
+        """
+        Genera y muestra un diagrama de Hasse para órdenes parciales.
+        """
+        try:
+            import matplotlib.pyplot as plt
+            import networkx as nx
+        except ImportError:
+            print("Error: Instala matplotlib y networkx: pip install matplotlib networkx")
+            return False
+
+        es_hasse, resultado = self.generar_diagrama_hasse()
+        if not es_hasse:
+            print(resultado)
+            return False
+
+        aristas = resultado['aristas']
+        elementos = resultado['elementos']
+
+        G = nx.DiGraph()
+        G.add_nodes_from(elementos)
+        G.add_edges_from(aristas)
+
+        pos = self._calcular_posiciones(resultado)
+
+        plt.figure(figsize=(8, 6))
+        plt.title("Diagrama de Hasse", fontsize=14, fontweight='bold')
+
+        nx.draw_networkx_nodes(G, pos, node_color='lightblue', node_size=800)
+        nx.draw_networkx_edges(G, pos, arrows=False, width=2)
+        nx.draw_networkx_labels(G, pos, font_size=12, font_weight='bold')
+
+        plt.axis('off')
+        plt.tight_layout()
+        plt.show()
+        return True
+
     def _calcular_niveles_hasse(self, grafo, elementos):
         """
         Calcula los niveles de cada elemento en el diagrama de Hasse.
-        Los elementos minimales están en nivel 0.
-        Returns:
-            dict: Diccionario {nivel: [elementos]}
         """
-        # Encontrar elementos sin predecesores (minimales)
         tiene_predecesor = set()
         for origen in grafo:
             for destino in grafo[origen]:
                 tiene_predecesor.add(destino)
 
         elementos_minimales = elementos - tiene_predecesor
-
-        # Asignar niveles
         niveles = {0: list(elementos_minimales)}
         nivel_elemento = {elem: 0 for elem in elementos_minimales}
 
@@ -462,7 +443,6 @@ Resultado: {'ES una relación de equivalencia' if es_equivalencia else 'NO ES un
             for elem in niveles.get(nivel_actual, []):
                 for sucesor in grafo[elem]:
                     if sucesor not in nivel_elemento:
-                        # Verificar que todos los predecesores ya tienen nivel asignado
                         predecesores_listos = True
                         for origen in grafo:
                             if sucesor in grafo[origen] and origen not in nivel_elemento:
@@ -481,55 +461,14 @@ Resultado: {'ES una relación de equivalencia' if es_equivalencia else 'NO ES un
 
         return niveles
 
-    def mostrar_diagrama_hasse(self):
-        """
-        Genera y muestra un diagrama de Hasse simple con networkx y matplotlib.
-        """
-        try:
-            import matplotlib.pyplot as plt
-            import networkx as nx
-        except ImportError:
-            print("Error: Instala matplotlib y networkx: pip install matplotlib networkx")
-            return False
-
-        es_hasse, resultado = self.generar_diagrama_hasse() # Retorna true y el diccionario
-        if not es_hasse:
-            print(resultado)
-            return False
-
-        aristas = resultado['aristas']
-        elementos = resultado['elementos']
-
-        # Crear grafo y posiciones
-        G = nx.DiGraph()
-        G.add_nodes_from(elementos)
-        G.add_edges_from(aristas)
-
-        pos = self._calcular_posiciones(resultado)
-
-        # Dibujar diagrama
-        plt.figure(figsize=(8, 6))
-        plt.title("Diagrama de Hasse", fontsize=14, fontweight='bold')
-
-        nx.draw_networkx_nodes(G, pos, node_color='lightblue', node_size=800)
-        nx.draw_networkx_edges(G, pos, arrows=False, width=2)
-        nx.draw_networkx_labels(G, pos, font_size=12, font_weight='bold')
-
-        plt.axis('off')
-        plt.tight_layout()
-        plt.show()
-        return True
-
     def _calcular_posiciones(self, hasse_data):
         """
-        Calcula posiciones para los nodos del diagrama.
+        Calcula posiciones para los nodos del diagrama de Hasse.
         """
-        # Obtiene la estructura: {0: [1], 1: [2,3], 2: [4,6], 3: [12]}
         grafo = hasse_data['grafo']
         elementos = hasse_data['elementos']
         niveles = self._calcular_niveles_hasse(grafo, elementos)
 
-        # fórmula de distribución centrada.
         pos = {}
         for nivel, elementos_nivel in niveles.items():
             elementos_ordenados = sorted(elementos_nivel)
