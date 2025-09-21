@@ -476,3 +476,75 @@ Resultado: {'ES una relación de equivalencia' if es_equiv else 'NO ES una relac
                 x = i - len(elementos_ordenados)/2 + 0.5 if len(elementos_ordenados) > 1 else 0
                 pos[elemento] = (x, nivel)
         return pos
+
+    def mostrar_grafo_completo_con_reflexivos(self):
+        """
+        Muestra un grafo dirigido COMPLETO incluyendo TODAS las aristas reflexivas.
+        Para relaciones generales que no son orden parcial ni equivalencia.
+        """
+        try:
+            import matplotlib.pyplot as plt
+            import networkx as nx
+        except ImportError:
+            print("Error: Instala matplotlib y networkx: pip install matplotlib networkx")
+            return False
+
+        # Crear grafo dirigido con TODAS las aristas (incluidas reflexivas)
+        G = nx.DiGraph()
+        G.add_nodes_from(self.conjunto)
+        G.add_edges_from(self.relacion)  # Agregar TODAS las aristas sin filtrar
+
+        # Configurar layout
+        plt.figure(figsize=(10, 8))
+
+        # Usar layout spring para distribución natural
+        pos = nx.spring_layout(G, k=3, iterations=50)
+
+        # Título descriptivo
+        plt.title("Grafo Dirigido Completo de la Relación", fontsize=16, fontweight='bold')
+
+        # Dibujar nodos
+        nx.draw_networkx_nodes(G, pos, node_color='lightblue',
+                               node_size=1000, alpha=0.8)
+
+        # Separar aristas reflexivas de no reflexivas para mejor visualización
+        aristas_reflexivas = [(a, b) for (a, b) in self.relacion if a == b]
+        aristas_normales = [(a, b) for (a, b) in self.relacion if a != b]
+
+        # Dibujar aristas normales
+        if aristas_normales:
+            nx.draw_networkx_edges(G, pos, edgelist=aristas_normales,
+                                   arrows=True, arrowsize=20,
+                                   edge_color='gray', width=2, alpha=0.7)
+
+        # Dibujar aristas reflexivas con estilo diferente
+        if aristas_reflexivas:
+            nx.draw_networkx_edges(G, pos, edgelist=aristas_reflexivas,
+                                   arrows=True, arrowsize=15,
+                                   edge_color='red', width=1.5, alpha=0.6,
+                                   connectionstyle="arc3,rad=0.3")  # Curvatura para reflexivos
+
+        # Etiquetas de nodos
+        nx.draw_networkx_labels(G, pos, font_size=12, font_weight='bold')
+
+        # Información adicional
+        info_text = f"Nodos: {len(self.conjunto)}\n"
+        info_text += f"Aristas totales: {len(self.relacion)}\n"
+        info_text += f"Reflexivas: {len(aristas_reflexivas)}\n"
+        info_text += f"No reflexivas: {len(aristas_normales)}"
+
+        plt.text(0.02, 0.98, info_text, transform=plt.gca().transAxes,
+                 verticalalignment='top', bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.8))
+
+        # Leyenda
+        from matplotlib.lines import Line2D
+        legend_elements = [
+            Line2D([0], [0], color='gray', lw=2, label='Aristas normales'),
+            Line2D([0], [0], color='red', lw=1.5, label='Aristas reflexivas')
+        ]
+        plt.legend(handles=legend_elements, loc='upper right')
+
+        plt.axis('off')
+        plt.tight_layout()
+        plt.show()
+        return True
