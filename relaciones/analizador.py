@@ -238,7 +238,7 @@ Resultado: {'ES una relación de equivalencia' if es_equivalencia else 'NO ES un
 
     def mostrar_grafo_equivalencia(self):
         """
-        Genera y muestra un grafo de equivalencia con todas las aristas (incluyendo reflexivas).
+        Genera y muestra un grafo de equivalencia hermoso con colores por clases.
         """
         try:
             import matplotlib.pyplot as plt
@@ -253,44 +253,66 @@ Resultado: {'ES una relación de equivalencia' if es_equivalencia else 'NO ES un
             print("No se puede generar grafo de equivalencia: la relación no es de equivalencia")
             return False
 
+        # Obtener clases de equivalencia
+        resultado_clases = self.generar_clases_equivalencia()
+        clases = resultado_clases[1]['clases']
+
         # Crear grafo no dirigido
         G = nx.Graph()
         G.add_nodes_from(self.conjunto)
-
-        # Agregar aristas no reflexivas
         aristas_no_reflexivas = [(a, b) for (a, b) in self.relacion if a != b]
         G.add_edges_from(aristas_no_reflexivas)
 
-        # Configurar el layout
-        pos = nx.spring_layout(G, seed=42)
+        # Layout mejorado
+        pos = nx.spring_layout(G, seed=42, k=1.5, iterations=50)
 
-        plt.figure(figsize=(10, 8))
-        plt.title("Grafo de Relación de Equivalencia", fontsize=16, fontweight='bold')
+        plt.figure(figsize=(12, 9))
+        plt.title("Grafo de Relación de Equivalencia", fontsize=18, fontweight='bold', pad=20)
 
-        # Dibujar nodos
-        nx.draw_networkx_nodes(G, pos, node_color='lightblue', node_size=1200, alpha=0.9)
+        # Colores bonitos para las clases
+        colores_clases = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FECA57', '#FF9FF3', '#54A0FF', '#5F27CD']
 
-        # Dibujar aristas no reflexivas
-        nx.draw_networkx_edges(G, pos, width=2, alpha=0.6, edge_color='gray')
+        # Dibujar nodos por clases con colores diferentes
+        for i, clase in enumerate(clases):
+            color = colores_clases[i % len(colores_clases)]
+            nx.draw_networkx_nodes(G, pos, nodelist=list(clase),
+                                 node_color=color, node_size=1500, alpha=0.9,
+                                 edgecolors='white', linewidths=3)
 
-        # Dibujar aristas reflexivas
+        # Dibujar aristas simétricas con mejor estilo
+        nx.draw_networkx_edges(G, pos, width=3, alpha=0.7, edge_color='#2C3E50')
+
+        # Dibujar aristas reflexivas mejoradas
         reflexivas = [a for a in self.conjunto if (a, a) in self.relacion]
         for nodo in reflexivas:
             x, y = pos[nodo]
-            # Bucle
-            circle = plt.Circle((x + 0.06, y + 0.06), 0.06, fill=False, color='red', linewidth=2)
+            # Bucle reflexivo más elegante
+            circle = plt.Circle((x + 0.04, y + 0.08), 0.05, fill=False, color='#E74C3C', linewidth=3)
             plt.gca().add_patch(circle)
 
-        # Dibujar etiquetas
-        nx.draw_networkx_labels(G, pos, font_size=14, font_weight='bold')
+        # Etiquetas de nodos más elegantes
+        nx.draw_networkx_labels(G, pos, font_size=16, font_weight='bold', font_color='white')
 
-        # Agregar leyenda
+        # Información de clases con estilo similar a la leyenda y sin chocar con título
+        clases_info = "Clases de Equivalencia: "
+        for i, clase in enumerate(clases):
+            elementos = sorted(clase)
+            representante = min(clase)
+            clases_info += f"[{representante}] = {{{', '.join(map(str, elementos))}}}   "
+
+        plt.figtext(0.5, 0.02, clases_info, ha='center', fontsize=11, fontweight='bold',
+                   bbox=dict(boxstyle='round,pad=0.5', facecolor='lightgray', alpha=0.8))
+
+        # Leyenda mejorada
         from matplotlib.lines import Line2D
         legend_elements = [
-            Line2D([0], [0], color='gray', lw=2, label='Aristas simétricas'),
-            Line2D([0], [0], color='red', lw=2, label='Aristas reflexivas')
+            Line2D([0], [0], color='#2C3E50', lw=3, label='Aristas simétricas'),
+            Line2D([0], [0], color='#E74C3C', lw=3, label='Aristas reflexivas'),
+            Line2D([0], [0], marker='o', color='w', markerfacecolor='#FF6B6B',
+                   markersize=15, label='Nodos por clases de equivalencia')
         ]
-        plt.legend(handles=legend_elements, loc='upper right')
+        plt.legend(handles=legend_elements, loc='upper right', fontsize=11,
+                  frameon=True, fancybox=True, shadow=True)
 
         plt.axis('off')
         plt.tight_layout()
