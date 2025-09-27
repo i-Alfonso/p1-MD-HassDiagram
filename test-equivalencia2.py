@@ -4,30 +4,34 @@ print("="*80)
 print("PRUEBA COMPLETA DEL SISTEMA DE ANÁLISIS DE RELACIONES")
 print("="*80)
 
-# EJEMPLO 1: Relación de equivalencia completa
+# EJEMPLO: Relación de equivalencia con letras
 print("\n" + "="*60)
-print("EJEMPLO: RELACIÓN DE EQUIVALENCIA (congruencia módulo 3)")
+print("EJEMPLO: RELACIÓN DE EQUIVALENCIA (vocales y consonantes)")
 print("="*60)
 
-conjunto_equiv = {"0", "1", "2", "3", "4", "5"}
+conjunto_equiv = {"a", "e", "i", "o", "u", "b", "c", "d"}
 
 relacion_equiv = {
     # Reflexiva - cada elemento se relaciona consigo mismo
-    ("0", "0"), ("1", "1"), ("2", "2"), ("3", "3"), ("4", "4"), ("5", "5"),
+    ("a", "a"), ("e", "e"), ("i", "i"), ("o", "o"), ("u", "u"),
+    ("b", "b"), ("c", "c"), ("d", "d"),
 
-    # Clase [0]: {0, 3} - números que dan resto 0 al dividir por 3
-    ("0", "3"), ("3", "0"),
+    # Clase [vocales]: todas se relacionan entre sí
+    ("a", "e"), ("a", "i"), ("a", "o"), ("a", "u"),
+    ("e", "a"), ("e", "i"), ("e", "o"), ("e", "u"),
+    ("i", "a"), ("i", "e"), ("i", "o"), ("i", "u"),
+    ("o", "a"), ("o", "e"), ("o", "i"), ("o", "u"),
+    ("u", "a"), ("u", "e"), ("u", "i"), ("u", "o"),
 
-    # Clase [1]: {1, 4} - números que dan resto 1 al dividir por 3
-    ("1", "4"), ("4", "1"),
-
-    # Clase [2]: {2, 5} - números que dan resto 2 al dividir por 3
-    ("2", "5"), ("5", "2")
+    # Clase [consonantes]: se relacionan entre sí
+    ("b", "c"), ("b", "d"),
+    ("c", "b"), ("c", "d"),
+    ("d", "b"), ("d", "c"),
 }
 
-print("Conjunto A = {0, 1, 2, 3, 4, 5}")
-print("Relación R: a ≡ b (mod 3)")
-print("Descripción: Dos números son equivalentes si tienen el mismo resto al dividir por 3")
+print("Conjunto A = {a, e, i, o, u, b, c, d}")
+print("Relación R: Dos letras son equivalentes si ambas son vocales o ambas son consonantes")
+print("Descripción: La relación divide el conjunto en dos clases de equivalencia: vocales y consonantes")
 print()
 
 mostrar_analisis_completo(conjunto_equiv, relacion_equiv)
